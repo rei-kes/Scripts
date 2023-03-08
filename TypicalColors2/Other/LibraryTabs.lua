@@ -24,7 +24,7 @@ local ProjectileSilentAimBox = CombatTab:AddRightTabbox()
     ProjectileSilentAimTab:AddDropdown("ProjectileSilentAimTargeting", { Text = "Silent Aim Targeting", Default = "Closest to Cursor", Values = {"Closest to Cursor", "Closest to Character"} })
     ProjectileSilentAimTab:AddToggle("TargetLeadingPosition", { Text = "Target Leading Position" })
     ProjectileSilentAimTab:AddSlider("ProjectileFieldOfView", { Text = "Field of View", Default = 90, Min = 1, Max = 180, Rounding = 0 })
-    ProjectileSilentAimTab:AddToggle("ProjectileAutoShoot", { Text = "Auto Shoot" })
+    --ProjectileSilentAimTab:AddToggle("ProjectileAutoShoot", { Text = "Auto Shoot" }) << might implement on fire, redirect if successful
     local ProjectileSilentAimSettings = ProjectileSilentAimBox:AddTab("Settings")
     ProjectileSilentAimSettings:AddSlider("MaximumTravelTime", { Text = "Maximum Travel Time", Default = 1000, Min = 100, Max = 5000, Rounding = 0, Suffix = "ms" })
     ProjectileSilentAimSettings:AddDropdown("ProjectilePositions", { Text = "Projectile Positions", Values = {"Head", "Torso", "Feet"}, Multi = true })
@@ -49,8 +49,8 @@ local ProjectileSilentAimBox = CombatTab:AddRightTabbox()
     ProjectileSilentAimSettings:AddToggle("ProjectileVisibilityCheck", { Text = "Visibility Check" })
     ProjectileSilentAimSettings:AddToggle("ProjectileTargetBuildings", { Text = "Target Buildings", Default = true })
     ProjectileSilentAimSettings:AddToggle("ProjectileTargetInvisibles", { Text = "Target Invisibles" })
-    --ProjectileSilentAimSettings:AddSlider("ProjectileHitChance", { Text = "Hit Chance", Default = 100, Min = 0, Max = 100, Rounding = 0, Suffix = "%" })
-    --ProjectileSilentAimSettings:AddToggle("AutoShootWaits", { Text = "Auto Shoot Waits for Charge" }) not really viable when off
+    --ProjectileSilentAimSettings:AddSlider("ProjectileHitChance", { Text = "Hit Chance", Default = 100, Min = 0, Max = 100, Rounding = 0, Suffix = "%" }) << might implement confidence
+    --ProjectileSilentAimSettings:AddToggle("AutoShootWaits", { Text = "Auto Shoot Waits for Charge" }) << wait for a certain charge
 
 
 
