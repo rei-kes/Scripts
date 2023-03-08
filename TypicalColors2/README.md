@@ -6,10 +6,10 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/rei-kes/Scripts/main/
 
 notes:
 
-  currently only 1 feature, projectile aimbot
-    projectile aimbot iffy currently, works best with direct hit
-    not all of the projectile data is used yet (and offsets seem somewhat wrong?)
+* currently only 1 feature, projectile aimbot
+    * projectile aimbot iffy currently, works best with direct hit
+    * not all of the projectile data is used yet (and offsets seem somewhat wrong?)
 
-  recoding the rest, slowly, eventually
+* recoding the rest, slowly, eventually
 
-  etc etc
+etc etc
