@@ -1,3 +1,4 @@
+
 ```
 loadstring(game:HttpGet("https://raw.githubusercontent.com/rei-kes/Scripts/main/TypicalColors2/Main.lua"))()
 ```
