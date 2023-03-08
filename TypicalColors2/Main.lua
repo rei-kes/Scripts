@@ -29,12 +29,12 @@ getgenv().weaponsRequire = require(weaponsScript)
 
 
 getgenv().Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/wally-rblx/LinoriaLib/main/Library.lua"))()
-getgenv().ESP = loadstring(readfile("EspHandler.txt"))()
+getgenv().ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/rei-kes/Scripts/main/TypicalColors2/Other/ESPHandler.lua"))()
 
-getgenv().projectileData = loadstring(readfile("ProjectileData.txt"))()
-loadstring(readfile("HooksAndLoops.txt"))()
-loadstring(readfile("LibraryTabs.txt"))()
-loadstring(readfile("ProjectileAimbot.txt"))()
+getgenv().projectileData = loadstring(game:HttpGet("https://raw.githubusercontent.com/rei-kes/Scripts/main/TypicalColors2/Aimbot/ProjectileData.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/rei-kes/Scripts/main/TypicalColors2/Other/HooksAndLoops.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/rei-kes/Scripts/main/TypicalColors2/Other/LibraryTabs.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/rei-kes/Scripts/main/TypicalColors2/Aimbot/ProjectileAimbot.lua"))()
 
 
 
