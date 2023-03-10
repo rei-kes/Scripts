@@ -4,7 +4,7 @@ Library:SetWatermark("trinkledink")
 local CombatTab = Window:AddTab("Combat")
 
 local HitscanSilentAimBox = CombatTab:AddRightTabbox()
-    local HitscanSilentAimTab = HitscanSilentAimBox:AddTab("Hitscan Aimbot")
+    local HitscanSilentAimTab = HitscanSilentAimBox:AddTab("Hitscan Aimbot") -- currently placeholder
     HitscanSilentAimTab:AddToggle("HitscanSilentAim", { Text = "Silent Aim" }):AddKeyPicker("HitscanSilentAimKey", { Text = "Silent Aim", Default = "ButtonStart", Mode = "Hold" })
     HitscanSilentAimTab:AddDropdown("HitscanSilentAimTargeting", { Text = "Silent Aim Targeting", Default = "Closest to Cursor", Values = {"Closest to Cursor", "Closest to Character"} })
     --HitscanSilentAimTab:AddDropdown("SilentAimMode", { Text = "Silent Aim Mode", Default = "Camera", Values = {"Camera", "Bullet"} })
@@ -24,7 +24,7 @@ local ProjectileSilentAimBox = CombatTab:AddRightTabbox()
     ProjectileSilentAimTab:AddDropdown("ProjectileSilentAimTargeting", { Text = "Silent Aim Targeting", Default = "Closest to Cursor", Values = {"Closest to Cursor", "Closest to Character"} })
     ProjectileSilentAimTab:AddToggle("TargetLeadingPosition", { Text = "Target Leading Position" })
     ProjectileSilentAimTab:AddSlider("ProjectileFieldOfView", { Text = "Field of View", Default = 90, Min = 1, Max = 180, Rounding = 0 })
-    --ProjectileSilentAimTab:AddToggle("ProjectileAutoShoot", { Text = "Auto Shoot" }) << might implement on fire, redirect if successful
+    ProjectileSilentAimTab:AddToggle("ProjectileAutoShoot", { Text = "Auto Shoot" })
     local ProjectileSilentAimSettings = ProjectileSilentAimBox:AddTab("Settings")
     ProjectileSilentAimSettings:AddSlider("MaximumTravelTime", { Text = "Maximum Travel Time", Default = 1000, Min = 100, Max = 5000, Rounding = 0, Suffix = "ms" })
     ProjectileSilentAimSettings:AddDropdown("ProjectilePositions", { Text = "Projectile Positions", Values = {"Head", "Torso", "Feet"}, Multi = true })
