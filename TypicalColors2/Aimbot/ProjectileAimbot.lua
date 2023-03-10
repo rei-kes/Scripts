@@ -152,7 +152,7 @@ local playerPredictor = function(targets)
     for _,v in next, getPlayers() do
         if v ~= player and v.Character and v.Character:FindFirstChild("Hitbox") and v.Character:FindFirstChild("HumanoidRootPart") then
             if playerStorage.History[v] then
-                playerStorage.History[v] = {Current = {Position = v.Character.Hitbox.Position, Velocity = v.Character.HumanoidRootPart.AssemblyLinearVelocity--[[(v.Character.Hitbox.Position - playerStorage.History[v].Current.Position) * 10]]}, Past = playerStorage.History[v].Current}
+                playerStorage.History[v] = {Current = {Position = v.Character.Hitbox.Position, Velocity = v.Character.HumanoidRootPart.AssemblyLinearVelocity--[[(v.Character.Hitbox.Position - playerStorage.History[v].Current.Position) * 10]]}, Past = playerStorage.History[v].Current} -- dictionary hell starts here
             else
                 playerStorage.History[v] = {Current = {Position = v.Character.Hitbox.Position, Velocity = v.Character.HumanoidRootPart.AssemblyLinearVelocity}, Past = {Position = v.Character.Hitbox.Position, Velocity = v.Character.HumanoidRootPart.AssemblyLinearVelocity}}
             end
