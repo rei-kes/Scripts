@@ -1,4 +1,4 @@
-local INTERVAL = 1 / 30
+local INTERVAL = 1 / 30            -- of simulated character movement
 local timeWindow = INTERVAL + 0.01
 
 local toXY = function(to, from)
@@ -209,13 +209,13 @@ local getCandidates = function(targets)
 
                 local camera, angles = (CFrame.lookAt(workSpace.CurrentCamera.CFrame.Position, character.Position) * projStats.Offset).Position, {}
                 if character.NoPositions then
-                    local angle = projectile(camera, character.Position, simulatedTime - stats.Network.ServerStatsItem["Data Ping"]:GetValue() / 1000, projStats)
+                    local angle = projectile(camera, character.Position, simulatedTime - ping, projStats)
                     if angle then
                         angles[#angles + 1] = {angle = angle, position = character.Position}
                     end
                 else
                     for _,position in positions do
-                        local angle = projectile(camera, character.Position + position, simulatedTime - stats.Network.ServerStatsItem["Data Ping"]:GetValue() / 1000, projStats)
+                        local angle = projectile(camera, character.Position + position, simulatedTime - ping, projStats)
                         if angle then
                             angles[#angles + 1] = {angle = angle, position = character.Position + position}
                         end
@@ -237,13 +237,13 @@ local getCandidates = function(targets)
     return candidates
 end
 
-AddTick(function()
+Ticks["ProjectileAimbot"] = function(manualCall)
     lookVectorOVERRIDE, cameraOVERRIDE = nil, nil
 
     local targets = getTargets(false, not Toggles.TargetLeadingPosition.Value)
     playerPredictor(targets)
 
-    if Toggles.ProjectileSilentAim.Value and Options.ProjectileSilentAimKey:GetState() and not variables.DISABLED.Value then -- possibly only use when able to fire
+    if Toggles.ProjectileSilentAim.Value and Options.ProjectileSilentAimKey:GetState() and not variables.DISABLED.Value and (Toggles.ProjectileAutoShoot.Value or manualCall) then
         local candidates = getCandidates(targets)
         if #candidates > 0 then
             table.sort(candidates, function(a, b)
@@ -266,10 +266,12 @@ AddTick(function()
                 end
 
                 lookVectorOVERRIDE, cameraOVERRIDE = target.Candidate.Angle, target.Candidate.Camera
-                spawn(function()
-                    weaponsRequire.firebullet(projectileData[variables.gun.Value.Name].Alt)
-                end)
+                if Toggles.ProjectileAutoShoot.Value then
+                    spawn(function()
+                        weaponsRequire.firebullet(projectileData[variables.gun.Value.Name].Alt)
+                    end)
+                end
             end
         end
     end
-end)
+end
