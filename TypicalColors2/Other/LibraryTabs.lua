@@ -4,9 +4,9 @@ Library:SetWatermark("trinkledink")
 local CombatTab = Window:AddTab("Combat")
 
 local HitscanSilentAimBox = CombatTab:AddRightTabbox()
-    local HitscanSilentAimTab = HitscanSilentAimBox:AddTab("Hitscan Aimbot") -- currently placeholder
+    local HitscanSilentAimTab = HitscanSilentAimBox:AddTab("Hitscan Aimbot")
     HitscanSilentAimTab:AddToggle("HitscanSilentAim", { Text = "Silent Aim" }):AddKeyPicker("HitscanSilentAimKey", { Text = "Silent Aim", Default = "ButtonStart", Mode = "Hold" })
-    HitscanSilentAimTab:AddDropdown("HitscanSilentAimTargeting", { Text = "Silent Aim Targeting", Default = "Closest to Cursor", Values = {"Closest to Cursor", "Closest to Character"} })
+    HitscanSilentAimTab:AddDropdown("HitscanTargeting", { Text = "Silent Aim Targeting", Default = "Closest to Cursor", Values = {"Closest to Cursor", "Closest to Character"} })
     --HitscanSilentAimTab:AddDropdown("SilentAimMode", { Text = "Silent Aim Mode", Default = "Camera", Values = {"Camera", "Bullet"} })
     HitscanSilentAimTab:AddSlider("HitscanFieldOfView", { Text = "Field of View", Default = 90, Min = 1, Max = 180, Rounding = 0 })
     HitscanSilentAimTab:AddToggle("WallBang", { Text = "Wall Bang" })
@@ -21,7 +21,7 @@ local HitscanSilentAimBox = CombatTab:AddRightTabbox()
 local ProjectileSilentAimBox = CombatTab:AddRightTabbox()
     local ProjectileSilentAimTab = ProjectileSilentAimBox:AddTab("Projectile Aimbot")
     ProjectileSilentAimTab:AddToggle("ProjectileSilentAim", { Text = "Silent Aim" }):AddKeyPicker("ProjectileSilentAimKey", { Text = "Silent Aim", Default = "ButtonStart", Mode = "Hold" })
-    ProjectileSilentAimTab:AddDropdown("ProjectileSilentAimTargeting", { Text = "Silent Aim Targeting", Default = "Closest to Cursor", Values = {"Closest to Cursor", "Closest to Character"} })
+    ProjectileSilentAimTab:AddDropdown("ProjectileTargeting", { Text = "Silent Aim Targeting", Default = "Closest to Cursor", Values = {"Closest to Cursor", "Closest to Character"} })
     ProjectileSilentAimTab:AddToggle("TargetLeadingPosition", { Text = "Target Leading Position" })
     ProjectileSilentAimTab:AddSlider("ProjectileFieldOfView", { Text = "Field of View", Default = 90, Min = 1, Max = 180, Rounding = 0 })
     ProjectileSilentAimTab:AddToggle("ProjectileAutoShoot", { Text = "Auto Shoot" })
@@ -49,8 +49,8 @@ local ProjectileSilentAimBox = CombatTab:AddRightTabbox()
     ProjectileSilentAimSettings:AddToggle("ProjectileVisibilityCheck", { Text = "Visibility Check" })
     ProjectileSilentAimSettings:AddToggle("ProjectileTargetBuildings", { Text = "Target Buildings", Default = true })
     ProjectileSilentAimSettings:AddToggle("ProjectileTargetInvisibles", { Text = "Target Invisibles" })
-    --ProjectileSilentAimSettings:AddSlider("ProjectileHitChance", { Text = "Hit Chance", Default = 100, Min = 0, Max = 100, Rounding = 0, Suffix = "%" }) << might implement confidence
-    --ProjectileSilentAimSettings:AddToggle("AutoShootWaits", { Text = "Auto Shoot Waits for Charge" }) << wait for a certain charge
+    --ProjectileSilentAimSettings:AddSlider("ProjectileHitChance", { Text = "Hit Chance", Default = 100, Min = 0, Max = 100, Rounding = 0, Suffix = "%" })
+    --ProjectileSilentAimSettings:AddToggle("AutoShootWaits", { Text = "Auto Shoot Waits for Charge" }) not really viable when off
 
 
 
