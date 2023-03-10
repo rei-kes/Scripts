@@ -10,8 +10,11 @@ notes:
 
 * currently only 1 feature, projectile aimbot
     * projectile aimbot iffy currently, works best with direct hit
-    * not all of the projectile data is used yet (and offsets seem somewhat wrong?)
+    * loves to overshoot with arc weapons
+    * offsets seem somewhat wrong?
 
 * recoding the rest, slowly, eventually
+
+* crackhead code
 
 etc etc
