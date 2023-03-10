@@ -246,12 +246,21 @@ Ticks["ProjectileAimbot"] = function(manualCall)
     if Toggles.ProjectileSilentAim.Value and Options.ProjectileSilentAimKey:GetState() and not variables.DISABLED.Value and (Toggles.ProjectileAutoShoot.Value or manualCall) then
         local candidates = getCandidates(targets)
         if #candidates > 0 then
-            table.sort(candidates, function(a, b)
-                local angle_a = workSpace.Camera.CFrame.LookVector:Angle(CFrame.lookAt(workSpace.Camera.CFrame.Position, a.Candidate.Position).LookVector)
-                local angle_b = workSpace.Camera.CFrame.LookVector:Angle(CFrame.lookAt(workSpace.Camera.CFrame.Position, b.Candidate.Position).LookVector)
+            if Options.ProjectileTargeting.Value == "Closest to Cursor" then
+                table.sort(candidates, function(a, b)
+                    local angle_a = workSpace.Camera.CFrame.LookVector:Angle(CFrame.lookAt(workSpace.Camera.CFrame.Position, a.Candidate.Position).LookVector)
+                    local angle_b = workSpace.Camera.CFrame.LookVector:Angle(CFrame.lookAt(workSpace.Camera.CFrame.Position, b.Candidate.Position).LookVector)
 
-                return angle_a < angle_b
-            end)
+                    return angle_a < angle_b
+                end)
+            else
+                table.sort(candidates, function(a, b)
+                    local distance_a = (workSpace.Camera.CFrame - a.Candidate.Position).Magnitude
+                    local distance_b = (workSpace.Camera.CFrame - b.Candidate.Position).Magnitude
+
+                    return distance_a < distance_b
+                end)
+            end
 
             local target = candidates[1]
             local fovAngle = Toggles.TargetLeadingPosition.Value and math.acos(workSpace.Camera.CFrame.LookVector:Dot(CFrame.lookAt(workSpace.Camera.CFrame.Position, target.Candidate.Position).LookVector)) * (180 / math.pi) or 0
