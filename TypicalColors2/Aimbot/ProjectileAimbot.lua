@@ -1,6 +1,16 @@
 local INTERVAL = 1 / 30            -- of simulated character movement
 local timeWindow = INTERVAL + 0.01
 
+local getPositions = function()
+    local positions = {Options.PrimaryPosition.Value == "Head" and Vector3.new(0, 2, 0) or Options.PrimaryPosition.Value == "Feet" and Vector3.new(0, -2, 0) or Vector3.new()}
+    for i,_ in next, Options.ProjectilePositions.Value do
+        if i ~= Options.PrimaryPosition.Value then
+            table.insert(positions, i == "Head" and Vector3.new(0, 2, 0) or i == "Feet" and Vector3.new(0, -2, 0) or Vector3.new())
+        end
+    end
+    return positions
+end
+
 local toXY = function(to, from)
     return (to * Vector3.new(1, 0, 1) - from * Vector3.new(1, 0, 1)).Magnitude, from.Y - to.Y
 end
@@ -33,57 +43,57 @@ local clipVelocity = function(vector, normal)
 
     return Vector3.new(vector.X - (normal.X * dot), vector.Y - (normal.Y * dot), vector.Z - (normal.Z * dot))
 end
-local movement = function(character)
+local movement = function(prediction, rotation)
     local progression = 0
     for i = 1, 3 do
-        if progression >= 1 or character.Velocity.Magnitude < 0.001 then
+        if progression >= 1 or prediction.Velocity.Magnitude < 0.001 then
             break
         end
-        local distance = character.Velocity.Magnitude * INTERVAL
+        local distance = prediction.Velocity.Magnitude * INTERVAL
     
         local offset
         do
-            local ray = Ray.new(character.Position, Vector3.new(0, character.Velocity.Y < 0.01 and -2.75 or 2.75, 0))
+            local ray = Ray.new(prediction.Position, Vector3.new(0, prediction.Velocity.Y < 0.01 and -2.75 or 2.75, 0))
             local hit, position = workSpace:FindPartOnRayWithWhitelist(ray, {workSpace.Map.Clips, workSpace.Map.Geometry})
-            local verticalDist = math.abs(character.Position.Y - position.Y) - 0.01
-            offset = Vector3.new(0, character.Velocity.Y < 0.01 and -verticalDist or verticalDist, 0)
+            local verticalDist = math.abs(prediction.Position.Y - position.Y) - 0.01
+            offset = Vector3.new(0, prediction.Velocity.Y < 0.01 and -verticalDist or verticalDist, 0)
         end
 
         do
-            local ray = Ray.new(character.Position + offset, character.Velocity * INTERVAL)
+            local ray = Ray.new(prediction.Position + offset, prediction.Velocity * INTERVAL)
             local hit, position, normal = workSpace:FindPartOnRayWithWhitelist(ray, {workSpace.Map.Clips, workSpace.Map.Geometry})
             if hit then
-                distance = (character.Position + offset - position).Magnitude - 0.001
+                distance = (prediction.Position + offset - position).Magnitude - 0.001
             end
             
-            local percent = distance / (character.Velocity.Magnitude * INTERVAL)
+            local percent = distance / (prediction.Velocity.Magnitude * INTERVAL)
             if progression + percent > 1 then
-                distance = character.Velocity.Magnitude * INTERVAL * (percent - (progression + percent) % 1)
+                distance = prediction.Velocity.Magnitude * INTERVAL * (percent - (progression + percent) % 1)
             end
             progression += percent
 
-            character.Position += character.Velocity.Unit * distance
+            prediction.Position += prediction.Velocity.Unit * distance
             if (not normal or normal.Y < 0.7) and i == 1 then
-                character.Velocity -= Vector3.new(0, 50 * INTERVAL, 0)
+                prediction.Velocity -= Vector3.new(0, 50 * INTERVAL, 0)
             end
             if normal then
-                character.Velocity = clipVelocity(character.Velocity, normal)
+                prediction.Velocity = clipVelocity(prediction.Velocity, normal)
             end
         end
     end
 
-    if character.Rotation ~= 0 then
-        character.Velocity = (CFrame.Angles(0, character.Rotation * INTERVAL, 0) * CFrame.new(character.Velocity)).Position
+    if rotation and rotation ~= 0 then
+        prediction.Velocity = (CFrame.Angles(0, rotation * INTERVAL, 0) * CFrame.new(prediction.Velocity)).Position
     end
     
-    return character
+    return prediction
 end
 
 local projectile = function(from, to, simulatedTime, projStats)
     if projStats.Drop == 0 then
         if projStats.Acceleration.Amount == 0 then
             local timeToReach = (from - to).Magnitude / projStats.Speed
-            if timeToReach > simulatedTime - timeWindow and timeToReach < simulatedTime then
+            if not simulatedTime and timeToReach < Options.MaximumTravelTime.Value or timeToReach > simulatedTime - timeWindow and timeToReach < simulatedTime then
                 return CFrame.lookAt(from, to).LookVector
             end
         else
@@ -94,7 +104,7 @@ local projectile = function(from, to, simulatedTime, projStats)
         local rad1 = optimalAngle(x, y, projStats.Speed, projStats.Drop)
         if rad1 then
             local timeToReach = travelTime(x, rad1, projStats.Speed)
-            if timeToReach > simulatedTime - timeWindow and timeToReach < simulatedTime then
+            if not simulatedTime and timeToReach < Options.MaximumTravelTime.Value or timeToReach > simulatedTime - timeWindow and timeToReach < simulatedTime then
                 return toXYZ(from, to, rad1)
             end
         end
@@ -102,7 +112,7 @@ local projectile = function(from, to, simulatedTime, projStats)
         local rad2 = lobAngle(x, y, projStats.Speed, projStats.Drop)
         if rad2 then
             local timeToReach = travelTime(x, rad2, projStats.Speed)
-            if timeToReach > simulatedTime - timeWindow and timeToReach < simulatedTime then
+            if not simulatedTime and timeToReach < Options.MaximumTravelTime.Value or timeToReach > simulatedTime - timeWindow and timeToReach < simulatedTime then
                 return toXYZ(from, to, rad2)
             end
         end
@@ -120,6 +130,11 @@ local projectileRaycast = function(from, to, angle, simulatedTime, projStats)
 
         table.insert(polyPoints, Point3D.new(to))
     else
+        if not simulatedTime then
+            local x, y = toXY(from, to) -- lazy, just doing it for a second time
+            local rad1 = optimalAngle(x, y, projStats.Speed, projStats.Drop)
+            simulatedTime = travelTime(x, rad1, projStats.Speed)
+        end
         local momentum = angle * projStats.Speed
         for _ = 1, simulatedTime / INTERVAL do
             local ray = Ray.new(from, momentum * INTERVAL)
@@ -152,38 +167,78 @@ local playerPredictor = function(targets)
     for _,v in next, getPlayers() do
         if v ~= player and v.Character and v.Character:FindFirstChild("Hitbox") and v.Character:FindFirstChild("HumanoidRootPart") then
             if playerStorage.History[v] then
-                playerStorage.History[v] = {Current = {Position = v.Character.Hitbox.Position, Velocity = v.Character.HumanoidRootPart.AssemblyLinearVelocity--[[(v.Character.Hitbox.Position - playerStorage.History[v].Current.Position) * 10]]}, Past = playerStorage.History[v].Current} -- dictionary hell starts here
+                playerStorage.History[v].Previous = {
+                    Position = playerStorage.History[v].Position, 
+                    Velocity = playerStorage.History[v].Velocity, 
+                }
+
+                playerStorage.History[v].Position = v.Character.Hitbox.Position
+                playerStorage.History[v].Velocity = v.Character.HumanoidRootPart.AssemblyLinearVelocity
+
+                if Options.StrafeSamples.Value > 0 and playerStorage.History[v].Velocity.Magnitude > 0.001 then
+                    local direction1 = playerStorage.History[v].Velocity * Vector3.new(1, 0, 1)
+                    local direction2 = playerStorage.History[v].Previous.Velocity * Vector3.new(1, 0, 1)
+                    local rotation = -direction1:Angle(direction2, Vector3.new(0, 1, 0)) * 10 -- correct 0.1 second diffs
+                    rotation = rotation == rotation and math.abs(rotation) < 25 and math.clamp(rotation, -5, 5) or 0 -- goofy
+
+                    table.insert(playerStorage.History[v].StrafeSamples, rotation)
+                    while #playerStorage.History[v].StrafeSamples > Options.StrafeSamples.Value do
+                        table.remove(playerStorage.History[v].StrafeSamples, 1)
+                    end
+
+                    local collectiveRotation = 0
+                    for _,v in playerStorage.History[v].StrafeSamples do
+                        collectiveRotation += v
+                    end
+                    playerStorage.History[v].Rotation = collectiveRotation / #playerStorage.History[v].StrafeSamples
+                else
+                    playerStorage.History[v].StrafeSamples = {}
+                    playerStorage.History[v].Rotation = 0
+                end
             else
-                playerStorage.History[v] = {Current = {Position = v.Character.Hitbox.Position, Velocity = v.Character.HumanoidRootPart.AssemblyLinearVelocity}, Past = {Position = v.Character.Hitbox.Position, Velocity = v.Character.HumanoidRootPart.AssemblyLinearVelocity}}
+                playerStorage.History[v] = {
+                    Name = v.Name, 
+
+                    Position = v.Character.Hitbox.Position, 
+                    Prediction = v.Character.Hitbox.Position, -- changing position
+                    Velocity = v.Character.HumanoidRootPart.AssemblyLinearVelocity, -- (v.Character.Hitbox.Position - playerStorage.History[v].Previous.Position) * 10
+
+                    StrafeSamples = {}
+                }
             end
         end
     end
+
     for i,_ in playerStorage.History do
         if not players:FindFirstChild(i.Name) or not i.Character or not i.Character:FindFirstChild("Hitbox") or not i.Character:FindFirstChild("HumanoidRootPart") then
             playerStorage.History[i] = nil
         end
     end
+
     for _,v in next, targets do
         if v:IsA("Player") then
-            local direction = (playerStorage.History[v].Current.Velocity * Vector3.new(1, 0, 1)).Unit
-            local rotation = -direction:Angle(playerStorage.History[v].Past.Velocity * Vector3.new(1, 0, 1), Vector3.new(0, 1, 0)) * 10 -- correct 0.1 second diffs
+            playerStorage.History[v].Prediction = {
+                Position = playerStorage.History[v].Position, 
+                Velocity = playerStorage.History[v].Velocity
+            }
 
-            table.insert(playerStorage.Characters, {Position = playerStorage.History[v].Current.Position, Velocity = playerStorage.History[v].Current.Velocity, Rotation = rotation == rotation and rotation or 0, Origin = playerStorage.History[v].Current.Position, Name = v.Name})
+            table.insert(playerStorage.Characters, playerStorage.History[v])
         else
-            table.insert(playerStorage.Characters, {Position = v.Hitbox.Position, Velocity = Vector3.new(), Rotation = 0, Origin = v.Hitbox.Position, NoPositions = v.Hitbox.Size.Y < 3})
+            table.insert(playerStorage.Characters, {
+                Position = v.Hitbox.Position, 
+                SinglePoint = v.Hitbox.Size.Y < 3, 
+
+                Prediction = {
+                    Position = v.Hitbox.Position, 
+                    Velocity = v.Hitbox.Position, 
+                }
+            })
         end
     end
 end
 
-local getCandidates = function(targets)
+local getCandidates = function()
     local candidates = {}
-
-    local positions = {Options.PrimaryPosition.Value == "Head" and Vector3.new(0, 2, 0) or Options.PrimaryPosition.Value == "Feet" and Vector3.new(0, -2, 0) or Vector3.new()}
-    for i,_ in next, Options.ProjectilePositions.Value do
-        if i ~= Options.PrimaryPosition.Value then
-            table.insert(positions, i == "Head" and Vector3.new(0, 2, 0) or i == "Feet" and Vector3.new(0, -2, 0) or Vector3.new())
-        end
-    end
 
     if variables.gun.Value and projectileData[variables.gun.Value.Name] then
         local projStats = {Speed = projectileData[variables.gun.Value.Name].Speed, Drop = projectileData[variables.gun.Value.Name].Drop or 0, Acceleration = projectileData[variables.gun.Value.Name].Acceleration or {Amount = 0}, Offset = projectileData[variables.gun.Value.Name].Offset}
@@ -193,43 +248,56 @@ local getCandidates = function(targets)
         if typeof(projStats.Drop) == "function" then
             projStats.Drop = projStats.Drop()
         end
-        if projStats.Speed == 0 then
-            return {}
-        end
 
         for _,character in next, playerStorage.Characters do
-            local simulatedTime, candidate = 0, nil
+            local simulatedTime, stopTime, multipoints, positions = 0, Options.MaximumTravelTime.Value / 1000, {}, getPositions()
+
+            if character.SinglePoint then
+                positions = {Vector3.new()}
+            end
 
             local polyPoints = {}
             repeat
                 simulatedTime += INTERVAL
+                if not character.Name then -- building, only loop once
+                    simulatedTime = nil
+                end
 
-                character = movement(character)
-                table.insert(polyPoints, Point3D.new(character.Position - Vector3.new(0, 2, 0)))
+                character.Prediction = movement(character.Prediction, character.Rotation)
+                table.insert(polyPoints, Point3D.new(character.Prediction.Position - Vector3.new(0, 2, 0)))
 
-                local camera, angles = (CFrame.lookAt(workSpace.CurrentCamera.CFrame.Position, character.Position) * projStats.Offset).Position, {}
-                if character.NoPositions then
-                    local angle = projectile(camera, character.Position, simulatedTime - ping, projStats)
+                local camera, angles = (CFrame.lookAt(workSpace.CurrentCamera.CFrame.Position, character.Prediction.Position) * projStats.Offset).Position, {}
+                for i,position in positions do
+                    local angle = projectile(camera, character.Prediction.Position + position, simulatedTime, projStats)
                     if angle then
-                        angles[#angles + 1] = {angle = angle, position = character.Position}
-                    end
-                else
-                    for _,position in positions do
-                        local angle = projectile(camera, character.Position + position, simulatedTime - ping, projStats)
-                        if angle then
-                            angles[#angles + 1] = {angle = angle, position = character.Position + position}
-                        end
+                        angles[#angles + 1] = {angle = angle, position = i}
                     end
                 end
                 for _,v in angles do
-                    if projectileRaycast(camera, v.position, v.angle, simulatedTime, projStats) then
-                        candidate = {Position = Toggles.TargetLeadingPosition.Value and character.Position or character.Origin, Angle = v.angle, Camera = camera, Name = character.Name}
+                    if projectileRaycast(camera, character.Prediction.Position + positions[v.position], v.angle, simulatedTime, projStats) then
+                        if #multipoints == 0 then
+                            stopTime = simulatedTime -- loop 1 more tick to get possibly better positions
+                        end
+
+                        character.Position = Toggles.TargetLeadingPosition.Value and character.Prediction.Position or character.Position
+                        character.Angle, character.Camera = v.angle, camera
+                        character.Points = polyPoints
+
+                        table.insert(multipoints, {Character = character, Point = positions[v.position].Y})
+                        positions[v.position] = nil
                         break
                     end
                 end
-            until simulatedTime > Options.MaximumTravelTime.Value / 1000 or candidate
-            if candidate then
-                candidates[#candidates + 1] = {Candidate = candidate, Points = polyPoints}
+            until not simulatedTime or simulatedTime > stopTime
+
+            if #multipoints ~= 0 then
+                for _,v in multipoints do
+                    print(v.Point)
+                end
+                table.sort(candidates, function(a, b)
+                    return a.Point < b.Point
+                end)
+                table.insert(candidates, multipoints[1].Character)
             end
         end
     end
@@ -240,45 +308,49 @@ end
 Ticks["ProjectileAimbot"] = function(manualCall)
     lookVectorOVERRIDE, cameraOVERRIDE = nil, nil
 
-    local targets = getTargets(false, not Toggles.TargetLeadingPosition.Value)
-    playerPredictor(targets)
+    playerPredictor(getTargets({
+        Teammates = false, 
+        AccountFov = not Toggles.TargetLeadingPosition.Value, 
+        FOV = Options.ProjectileFieldOfView.Value, 
+        Raycast = Toggles.ProjectileVisibilityCheck.Value, 
+        TargetBuildings = Toggles.ProjectileTargetBuildings.Value,
+        TargetInvisibles = Toggles.ProjectileTargetInvisibles.Value
+    }))
 
     if Toggles.ProjectileSilentAim.Value and Options.ProjectileSilentAimKey:GetState() and not variables.DISABLED.Value and (Toggles.ProjectileAutoShoot.Value or manualCall) then
-        local candidates = getCandidates(targets)
+        local candidates = getCandidates()
         if #candidates > 0 then
             if Options.ProjectileTargeting.Value == "Closest to Cursor" then
                 table.sort(candidates, function(a, b)
-                    local angle_a = workSpace.Camera.CFrame.LookVector:Angle(CFrame.lookAt(workSpace.Camera.CFrame.Position, a.Candidate.Position).LookVector)
-                    local angle_b = workSpace.Camera.CFrame.LookVector:Angle(CFrame.lookAt(workSpace.Camera.CFrame.Position, b.Candidate.Position).LookVector)
+                    local angle_a = workSpace.Camera.CFrame.LookVector:Angle(CFrame.lookAt(workSpace.Camera.CFrame.Position, a.Position).LookVector)
+                    local angle_b = workSpace.Camera.CFrame.LookVector:Angle(CFrame.lookAt(workSpace.Camera.CFrame.Position, b.Position).LookVector)
 
                     return angle_a < angle_b
                 end)
             else
                 table.sort(candidates, function(a, b)
-                    local distance_a = (workSpace.Camera.CFrame - a.Candidate.Position).Magnitude
-                    local distance_b = (workSpace.Camera.CFrame - b.Candidate.Position).Magnitude
+                    local distance_a = (workSpace.Camera.CFrame - a.Position).Magnitude
+                    local distance_b = (workSpace.Camera.CFrame - b.Position).Magnitude
 
                     return distance_a < distance_b
                 end)
             end
 
             local target = candidates[1]
-            local fovAngle = Toggles.TargetLeadingPosition.Value and math.acos(workSpace.Camera.CFrame.LookVector:Dot(CFrame.lookAt(workSpace.Camera.CFrame.Position, target.Candidate.Position).LookVector)) * (180 / math.pi) or 0
+            local fovAngle = Toggles.TargetLeadingPosition.Value and math.acos(workSpace.Camera.CFrame.LookVector:Dot(CFrame.lookAt(workSpace.Camera.CFrame.Position, target.Position).LookVector)) * (180 / math.pi) or 0
             if fovAngle < Options.ProjectileFieldOfView.Value then
-                if Toggles.PlayerPredictionLine.Value and target.Candidate.Name then
+                if Toggles.PlayerPredictionLine.Value and target.Name then
                     ESP:UpdateObject({
-                        Key = target.Candidate.Name .. ".PlayerPredictionLine",
+                        Key = target.Name .. ".PlayerPredictionLine",
                         Drawing = PolyLineDynamic,
                         Properties = {Color = Options.PlayerPredictionLineColor.Value},
                         LifeTime = 1
                     }, target.Points)
                 end
 
-                lookVectorOVERRIDE, cameraOVERRIDE = target.Candidate.Angle, target.Candidate.Camera
+                lookVectorOVERRIDE, cameraOVERRIDE = target.Angle, target.Camera
                 if Toggles.ProjectileAutoShoot.Value then
-                    spawn(function()
-                        weaponsRequire.firebullet(projectileData[variables.gun.Value.Name].Alt)
-                    end)
+                    weaponsRequire.firebullet(projectileData[variables.gun.Value.Name].Alt)
                 end
             end
         end
