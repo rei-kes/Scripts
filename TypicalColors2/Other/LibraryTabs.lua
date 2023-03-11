@@ -25,6 +25,7 @@ local ProjectileSilentAimBox = CombatTab:AddRightTabbox()
     ProjectileSilentAimTab:AddToggle("TargetLeadingPosition", { Text = "Target Leading Position" })
     ProjectileSilentAimTab:AddSlider("ProjectileFieldOfView", { Text = "Field of View", Default = 90, Min = 1, Max = 180, Rounding = 0 })
     ProjectileSilentAimTab:AddToggle("ProjectileAutoShoot", { Text = "Auto Shoot" })
+    ProjectileSilentAimTab:AddSlider("StrafeSamples", { Text = "Strafe Samples", Default = 5, Min = 0, Max = 10, Rounding = 0 })
     local ProjectileSilentAimSettings = ProjectileSilentAimBox:AddTab("Settings")
     ProjectileSilentAimSettings:AddSlider("MaximumTravelTime", { Text = "Maximum Travel Time", Default = 1000, Min = 100, Max = 5000, Rounding = 0, Suffix = "ms" })
     ProjectileSilentAimSettings:AddDropdown("ProjectilePositions", { Text = "Projectile Positions", Values = {"Head", "Torso", "Feet"}, Multi = true })
@@ -99,7 +100,7 @@ local SettingsTab = Window:AddTab("Settings")
         end
     end)
 
-local PlayerList = SettingsTab:AddRightTabbox():AddTab("Player List")
+local PlayerList = SettingsTab:AddRightTabbox():AddTab("Player List") -- may separate into multiple categories in the future, such as combat + visuals
     PlayerList:AddDropdown('PlayerListMode', { Text = 'Player selection type', Values = { 'Whitelist', 'Blacklist' }, Default = 1 })
     PlayerList:AddDropdown('PlayerList', { Text = 'Player selection', Values = { 'Loading...' }, Multi = true })
     local refresh = function()
