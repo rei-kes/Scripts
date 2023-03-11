@@ -60,35 +60,36 @@ getgenv().checkPlayer = function(playerName)
     return false
 end
 
-getgenv().getTargets = function(teammates, accountFov)
+getgenv().getTargets = function(info) -- Teammates, AccountFov, FOV, Raycast, TargetBuildings, TargetInvisibles
     local targets = {}
+
     for _,v in next, getPlayers() do
         if v ~= player and v.Character and
         v.Character:FindFirstChild("UpperTorso") and v.Character:FindFirstChild("Hitbox") and v.Character:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Status") and v.Character:FindFirstChild("Dead") and v.Character.Dead.Value == false and
-        (Toggles.ProjectileTargetInvisibles.Value or v.Character.UpperTorso.Transparency < 0.9) and
-        (not teammates and v.Status.Team.Value ~= player.Status.Team.Value or teammates and v.Status.Team.Value == player.Status.Team.Value) and
-        (not accountFov or accountFov and math.acos(workSpace.Camera.CFrame.LookVector:Dot(CFrame.lookAt(workSpace.Camera.CFrame.Position, v.Character.Hitbox.Position).LookVector)) * (180 / math.pi) < Options.ProjectileFieldOfView.Value) then
-            local insert = true
-            if Toggles.ProjectileVisibilityCheck.Value then
-                local hit = workSpace:FindPartOnRayWithWhitelist(Ray.new(workSpace.CurrentCamera.CFrame.Position, v.Character.Hitbox.Position - workSpace.CurrentCamera.CFrame.Position), {workSpace.Map.Clips, workSpace.Map.Geometry})
-                if hit then
-                    insert = false
-                end
-            end
-
-            if insert then
-                table.insert(targets, v)
-            end
-        end
-    end
-    for _,v in next, workSpace:GetChildren() do
-        if Toggles.ProjectileTargetBuildings.Value and v:FindFirstChild("IsABldg") and checkPlayer(v.Owner.Value) and
-        players:FindFirstChild(v.Owner.Value) and v:FindFirstChild("Hitbox") and players[v.Owner.Value] ~= player and players[v.Owner.Value]:FindFirstChild("Status") and
-        (not teammates and players[v.Owner.Value].Status.Team.Value ~= player.Status.Team.Value or teammates and players[v.Owner.Value].Status.Team.Value == player.Status.Team.Value) and
-        (not accountFov or accountFov and math.acos(workSpace.Camera.CFrame.LookVector:Dot(CFrame.lookAt(workSpace.Camera.CFrame.Position, v.Hitbox.Position).LookVector)) * (180 / math.pi) < Options.ProjectileFieldOfView.Value) then
+        (info.TargetInvisibles or v.Character.UpperTorso.Transparency < 0.9) and
+        (not info.Teammates and v.Status.Team.Value ~= player.Status.Team.Value or info.Teammates and v.Status.Team.Value == player.Status.Team.Value) and
+        (not info.AccountFov or info.AccountFov and workSpace.Camera.CFrame.LookVector:Angle(CFrame.lookAt(workSpace.Camera.CFrame.Position, v.Character.Hitbox.Position).LookVector) * (180 / math.pi) < info.FOV) then
             table.insert(targets, v)
         end
     end
+    for _,v in next, workSpace:GetChildren() do
+        if info.TargetBuildings and v:FindFirstChild("IsABldg") and checkPlayer(v.Owner.Value) and
+        players:FindFirstChild(v.Owner.Value) and v:FindFirstChild("Hitbox") and players[v.Owner.Value] ~= player and players[v.Owner.Value]:FindFirstChild("Status") and
+        (not info.Teammates and players[v.Owner.Value].Status.Team.Value ~= player.Status.Team.Value or info.Teammates and players[v.Owner.Value].Status.Team.Value == player.Status.Team.Value) and
+        (not info.AccountFov or info.AccountFov and workSpace.Camera.CFrame.LookVector:Angle(CFrame.lookAt(workSpace.Camera.CFrame.Position, v.Hitbox.Position).LookVector) * (180 / math.pi) < info.FOV) then
+            table.insert(targets, v)
+        end
+    end
+
+    if info.Raycast then
+        for i,v in targets do
+            local hit = workSpace:FindPartOnRayWithWhitelist(Ray.new(workSpace.CurrentCamera.CFrame.Position, v.Character.Hitbox.Position - workSpace.CurrentCamera.CFrame.Position), {workSpace.Map.Clips, workSpace.Map.Geometry})
+            if hit then
+                targets[i] = nil
+            end
+        end
+    end
+
     return targets
 end
 
