@@ -88,23 +88,19 @@ end
 
 getgenv().Frames = {}
 run.Heartbeat:Connect(function()
-    local success, _error = pcall(function()
-        for _,_function in Frames do
-            _function()
-        end
-    end)
-    if not success then print(_error) end
+    for _,_function in Frames do
+        _function()
+    end
 end)
 
 getgenv().Ticks = {}
 task.spawn(function()
     while task.wait(0.1) do
-        local success, _error = pcall(function()
+        task.spawn(function() -- to get useful errors
             for _,_function in Ticks do
                 _function()
             end
         end)
-        if not success then print(_error) end
     end
 end)
 
