@@ -4,7 +4,20 @@ local function lerp(a, b, t)
     return a + (b - a) * t
 end
 
-local projectileData = { -- verify
+
+
+--[[
+    Speed           >> speed of projectile in studs per second
+    Drop            >> how much the projectile's Y velocity will reduce by every second
+    Acceleration    >> amount the speed will increase per second (the only weapon it was for isn't even in the game anymore, so just not even implemented yet)
+
+    Client          >> if a projectile is initiated on the client immediately
+    Offset          >> shift of the origin of the projectile relative to the camera
+
+    Hold            >> if a weapon is fired on the mouse button release
+    Alt             >> if a weapon's projectile is used with secondary click
+]]
+local projectileData = { -- some stuff might be wrong, completely forgot where i got the offsets from
     ["Cold Shoulder"] =         {Speed = 218.75, Drop = 25, Alt = true, Offset = CFrame.new(0, -0.375, 0)},
     ["Mad Milk"] =              {Speed = 63.75, Drop = 25, Offset = CFrame.new(0.75, -0.1875, -1.46875)},
     Sandman =                   {Speed = 187.5, Drop = 25, Alt = true, Offset = CFrame.new(0, -0.375, 0)},
@@ -29,28 +42,28 @@ local projectileData = { -- verify
     ["Flare Gun"] =             {Speed = 125, Drop = 25, Offset = CFrame.new(0.75, -0.1875, -1.46875)},
 
     ["Grenade Launcher"] =      {Speed = 76, Drop = 50, Offset = CFrame.new(0.5, -0.375, -1)},
-    ["Stickybomb Launcher"] =   {Speed = "func", Drop = 50, CanHold = true, Offset = CFrame.new(0.5, -0.375, -1)},
+    ["Stickybomb Launcher"] =   {Speed = "func", Drop = 50, Hold = true, Offset = CFrame.new(0.5, -0.375, -1)},
     ["Bikini Bomber"] =         {Speed = 76, Drop = 50, Offset = CFrame.new(0.5, -0.375, -1)},
-    ["Irish Guard"] =           {Speed = "func", Drop = 50, CanHold = true, Offset = CFrame.new(0.5, -0.375, -1)},
+    ["Irish Guard"] =           {Speed = "func", Drop = 50, Hold = true, Offset = CFrame.new(0.5, -0.375, -1)},
     ["Iron Bomber"] =           {Speed = 76, Drop = 50, Offset = CFrame.new(0.5, -0.375, -1)},
     ["Loch-n-Load"] =           {Speed = 76, Drop = 50, Offset = CFrame.new(0.5, -0.375, -1)},
-    ["Loose Cannon"] =          {Speed = 76, Drop = 50, CanHold = true, DoubleDonk = true, Offset = CFrame.new(0.5, -0.375, -1)},
-    ["Quickiebomb Launcher"] =  {Speed = "func", Drop = 50, CanHold = true, Offset = CFrame.new(0.5, -0.375, -1)},
+    ["Loose Cannon"] =          {Speed = 76, Drop = 50, Hold = true, DoubleDonk = true, Offset = CFrame.new(0.5, -0.375, -1)},
+    ["Quickiebomb Launcher"] =  {Speed = "func", Drop = 50, Hold = true, Offset = CFrame.new(0.5, -0.375, -1)},
     --["Sticky Jumper"] - ignore
     Ultimatum =                 {Speed = 76, Drop = 50, Offset = CFrame.new(0.5, -0.375, -1)},
 
     ["Short Circuit"] =         {Speed = 75, Alt = true, Offset = CFrame.new(0.5, -0.1875, -1.46875)},
     --Wrangler =                {Speed = 68.75, Alt = true}, -- only do projectile shit if alt fire
 
-    ["Rescue Ranger"] =         {Speed = 150, Drop = 12.5, Offset = CFrame.new(0.5, -0.1875, -1.46875)},
-    ["Syringe Crossbow"] =      {Speed = 150, Drop = 12.5, Offset = CFrame.new(0.5, -0.1875, -1.46875)}, -- implement auto teammate heal
-    ["Milk Pistol"] =           {Speed = 150, Drop = 12.5, Offset = CFrame.new(0.5, -0.1875, -1.46875)}, -- (The Dairy Douser)
+    ["Rescue Ranger"] =         {Speed = 150, Drop = 12.5, Client = true, Offset = CFrame.new(0.5, -0.1875, -1.46875)},
+    ["Syringe Crossbow"] =      {Speed = 150, Drop = 12.5, Client = true, Offset = CFrame.new(0.5, -0.1875, -1.46875)}, -- implement auto teammate heal
+    ["Milk Pistol"] =           {Speed = 150, Drop = 12.5, Client = true, Offset = CFrame.new(0.5, -0.1875, -1.46875)}, -- (The Dairy Douser)
 
-    Huntsman =                  {Speed = "func", Drop = "func", CanHold = true, Offset = CFrame.new(0.5, -0.1875, -1.46875)},
+    Huntsman =                  {Speed = "func", Drop = "func", Client = true, Hold = true, Offset = CFrame.new(0.5, -0.1875, -1.46875)},
     Lemonade =                  {Speed = 63.75, Drop = 25, Offset = CFrame.new(0.75, -0.1875, -1.46875)}
 }
 
- -- variable stats
+ -- variable stats      (note: most if not all are placeholders for future use)
 
 projectileData.Airstrike.Speed = function()
     return player.Character:FindFirstChild("RocketJumped") and 110 or 68.75
