@@ -2,10 +2,10 @@ local INTERVAL = 1 / 30            -- of simulated character movement
 local timeWindow = INTERVAL + 0.01
 
 local getPositions = function()
-    local positions = {Options.PrimaryPosition.Value == "Head" and Vector3.new(0, 2, 0) or Options.PrimaryPosition.Value == "Feet" and Vector3.new(0, -2, 0) or Vector3.new()}
-    for i,_ in next, Options.ProjectilePositions.Value do
+    local positions = {Vector3.new(0, Options.PrimaryPosition.Value == "Head" and 2 or Options.PrimaryPosition.Value == "Feet" and -2 or 0, 0)}
+    for i,_ in Options.ProjectilePositions.Value do
         if i ~= Options.PrimaryPosition.Value then
-            table.insert(positions, i == "Head" and Vector3.new(0, 2, 0) or i == "Feet" and Vector3.new(0, -2, 0) or Vector3.new())
+            table.insert(positions, Vector3.new(0, i == "Head" and 2 or i == "Feet" and -2 or 0, 0))
         end
     end
     return positions
@@ -123,7 +123,7 @@ local projectileRaycast = function(from, to, angle, simulatedTime, projStats)
     local polyPoints = {Point3D.new(from)}
     if projStats.Drop == 0 then
         local ray = Ray.new(from, to - from)
-        local hit = workSpace:FindPartOnRayWithWhitelist(ray, {workSpace.Map.Clips, workSpace.Map.Geometry})
+        local hit = workSpace:FindPartOnRayWithWhitelist(ray, {workSpace.Map.Geometry})
         if hit then
             return false
         end
@@ -138,7 +138,7 @@ local projectileRaycast = function(from, to, angle, simulatedTime, projStats)
         local momentum = angle * projStats.Speed
         for _ = 1, simulatedTime / INTERVAL do
             local ray = Ray.new(from, momentum * INTERVAL)
-            local hit, pos = workSpace:FindPartOnRayWithWhitelist(ray, {workSpace.Map.Clips, workSpace.Map.Geometry})
+            local hit, pos = workSpace:FindPartOnRayWithWhitelist(ray, {workSpace.Map.Geometry})
             if hit then
                 return false
             end
@@ -164,7 +164,7 @@ end
 local playerStorage = {History = {}, Characters = {}}
 local playerPredictor = function(targets)
     playerStorage.Characters = {}
-    for _,v in next, getPlayers() do
+    for _,v in getPlayers() do
         if v ~= player and v.Character and v.Character:FindFirstChild("Hitbox") and v.Character:FindFirstChild("HumanoidRootPart") then
             if playerStorage.History[v] then
                 playerStorage.History[v].Previous = {
@@ -215,7 +215,7 @@ local playerPredictor = function(targets)
         end
     end
 
-    for _,v in next, targets do
+    for _,v in targets do
         if v:IsA("Player") then
             playerStorage.History[v].Prediction = {
                 Position = playerStorage.History[v].Position, 
@@ -241,7 +241,17 @@ local getCandidates = function()
     local candidates = {}
 
     if variables.gun.Value and projectileData[variables.gun.Value.Name] then
-        local projStats = {Speed = projectileData[variables.gun.Value.Name].Speed, Drop = projectileData[variables.gun.Value.Name].Drop or 0, Acceleration = projectileData[variables.gun.Value.Name].Acceleration or {Amount = 0}, Offset = projectileData[variables.gun.Value.Name].Offset}
+        local projStats = {
+            Speed = projectileData[variables.gun.Value.Name].Speed, 
+            Drop = projectileData[variables.gun.Value.Name].Drop or 0, 
+            Acceleration = projectileData[variables.gun.Value.Name].Acceleration or {Amount = 0}, 
+
+            Client = projectileData[variables.gun.Value.Name].Acceleration, 
+            Offset = projectileData[variables.gun.Value.Name].Offset, 
+
+            Hold = projectileData[variables.gun.Value.Name].Hold, 
+            Alt = projectileData[variables.gun.Value.Name].Alt
+        }
         if typeof(projStats.Speed) == "function" then
             projStats.Speed = projStats.Speed(true)
         end
@@ -249,7 +259,7 @@ local getCandidates = function()
             projStats.Drop = projStats.Drop()
         end
 
-        for _,character in next, playerStorage.Characters do
+        for _,character in playerStorage.Characters do
             local simulatedTime, stopTime, multipoints, positions = 0, Options.MaximumTravelTime.Value / 1000, {}, getPositions()
 
             if character.SinglePoint then
@@ -268,13 +278,13 @@ local getCandidates = function()
 
                 local camera, angles = (CFrame.lookAt(workSpace.CurrentCamera.CFrame.Position, character.Prediction.Position) * projStats.Offset).Position, {}
                 for i,position in positions do
-                    local angle = projectile(camera, character.Prediction.Position + position, simulatedTime, projStats)
+                    local angle = projectile(camera, character.Prediction.Position + position, simulatedTime and simulatedTime - (not projStats.Client and ping or 0), projStats)
                     if angle then
-                        angles[#angles + 1] = {angle = angle, position = i}
+                        angles[#angles + 1] = {angle = angle, index = i}
                     end
                 end
                 for _,v in angles do
-                    if projectileRaycast(camera, character.Prediction.Position + positions[v.position], v.angle, simulatedTime, projStats) then
+                    if projectileRaycast(camera, character.Prediction.Position + positions[v.index], v.angle, simulatedTime and simulatedTime - (not projStats.Client and ping or 0), projStats) then
                         if #multipoints == 0 then
                             stopTime = simulatedTime -- loop 1 more tick to get possibly better positions
                         end
@@ -283,19 +293,16 @@ local getCandidates = function()
                         character.Angle, character.Camera = v.angle, camera
                         character.Points = polyPoints
 
-                        table.insert(multipoints, {Character = character, Point = positions[v.position].Y})
-                        positions[v.position] = nil
+                        table.insert(multipoints, {Character = character, Index = v.index})
+                        positions[v.index] = nil
                         break
                     end
                 end
             until not simulatedTime or simulatedTime > stopTime
 
             if #multipoints ~= 0 then
-                for _,v in multipoints do
-                    print(v.Point)
-                end
-                table.sort(candidates, function(a, b)
-                    return a.Point < b.Point
+                table.sort(multipoints, function(a, b)
+                    return a.Index < b.Index
                 end)
                 table.insert(candidates, multipoints[1].Character)
             end
