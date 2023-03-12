@@ -32,7 +32,7 @@ local ProjectileSilentAimBox = CombatTab:AddRightTabbox()
     ProjectileSilentAimSettings:AddDropdown("PrimaryPosition", { Text = "Primary Position", Default = "Feet", Values = {"Head", "Torso", "Feet"} })
     Options.ProjectilePositions:OnChanged(function()
         local empty = true
-        for _,_ in next, Options.ProjectilePositions.Value do
+        for _,_ in Options.ProjectilePositions.Value do
             empty = false
         end
         if empty or not Options.ProjectilePositions.Value[Options.PrimaryPosition.Value] then
@@ -105,12 +105,12 @@ local PlayerList = SettingsTab:AddRightTabbox():AddTab("Player List") -- may sep
     PlayerList:AddDropdown('PlayerList', { Text = 'Player selection', Values = { 'Loading...' }, Multi = true })
     local refresh = function()
         local playerList = {}
-        for _,v in next, players:GetPlayers() do
+        for _,v in players:GetPlayers() do
             if v ~= Player then
                 table.insert(playerList, v.Name)
             end
         end
-        for i,v in next, Options.PlayerList.Value do -- player selection removal, able to be disabled
+        for i,v in Options.PlayerList.Value do -- player selection removal, able to be disabled
             if not players:FindFirstChild(i) then
                 Options.PlayerList.Value[i] = nil
             end
