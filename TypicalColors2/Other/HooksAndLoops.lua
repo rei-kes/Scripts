@@ -34,7 +34,7 @@ local OldNameCall;OldNameCall = hookmetamethod(game, "__namecall", function(...)
     local Args = {...}
     local Self = Args[1]
     if Self and typeof(Self) == "Instance" and getnamecallmethod():lower() == "fireserver" then
-        if Self.Name == "BeanBoozled" or Self.Name == "empty" then -- literally the entire anticheat
+        if Self.Name == "BeanBoozled" then -- literally the entire anticheat
             return wait(9e9)
 
         elseif Self.Name == "CreateProjectile" then
@@ -86,14 +86,14 @@ end
 
 -- loops
 
-getgenv().Frames = {}
+global.Frames = {}
 run.Heartbeat:Connect(function()
     for _,_function in Frames do
         _function()
     end
 end)
 
-getgenv().Ticks = {}
+global.Ticks = {}
 task.spawn(function()
     while task.wait(0.1) do
         task.spawn(function() -- to get useful errors
@@ -107,5 +107,5 @@ end)
     -- specific loops
 
     Frames["Ping"] = function()
-        getgenv().ping = _stats.Network.ServerStatsItem["Data Ping"]:GetValue() / 1000
+        global.ping = _stats.Network.ServerStatsItem["Data Ping"]:GetValue() / 1000
     end
