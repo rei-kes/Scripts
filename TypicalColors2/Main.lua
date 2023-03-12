@@ -12,26 +12,28 @@ _G.ScriptRan = "init"
 
 -- defining
 
-getgenv().workSpace = game:GetService("Workspace")
-getgenv().players = game:GetService("Players")
-getgenv().player = players.LocalPlayer
-getgenv().playerGui = player.PlayerGui
-getgenv().replicatedStorage = game:GetService("ReplicatedStorage")
-getgenv().userInput = game:GetService("UserInputService")
-getgenv().run = game:GetService("RunService")
-getgenv()._stats = game:GetService("Stats")
-getgenv().client = playerGui:WaitForChild("GUI"):WaitForChild("Client")
-getgenv().variables = client:WaitForChild("Variables")
+getgenv().global = getgenv()
 
-getgenv().weaponsScript = client:WaitForChild("Functions"):WaitForChild("Weapons")
-getgenv().weaponsRequire = require(weaponsScript)
+global.workSpace = game:GetService("Workspace")
+global.players = game:GetService("Players")
+global.player = players.LocalPlayer
+global.playerGui = player.PlayerGui
+global.replicatedStorage = game:GetService("ReplicatedStorage")
+global.userInput = game:GetService("UserInputService")
+global.run = game:GetService("RunService")
+global._stats = game:GetService("Stats")
+global.client = playerGui:WaitForChild("GUI"):WaitForChild("Client")
+global.variables = client:WaitForChild("Variables")
+
+global.weaponsScript = client:WaitForChild("Functions"):WaitForChild("Weapons")
+global.weaponsRequire = require(weaponsScript)
 
 
 
-getgenv().Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/wally-rblx/LinoriaLib/main/Library.lua"))()
-getgenv().ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/rei-kes/Scripts/main/TypicalColors2/Other/DrawingHandler.lua"))() -- loadstring(readfile("DrawingHandler.lua"))()
+global.Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/wally-rblx/LinoriaLib/main/Library.lua"))()
+global.ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/rei-kes/Scripts/main/TypicalColors2/Other/DrawingHandler.lua"))() -- loadstring(readfile("DrawingHandler.lua"))()
 
-getgenv().projectileData = loadstring(game:HttpGet("https://raw.githubusercontent.com/rei-kes/Scripts/main/TypicalColors2/Aimbot/ProjectileData.lua"))() -- loadstring(readfile("ProjectileData.lua"))()
+global.projectileData = loadstring(game:HttpGet("https://raw.githubusercontent.com/rei-kes/Scripts/main/TypicalColors2/Aimbot/ProjectileData.lua"))() -- loadstring(readfile("ProjectileData.lua"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/rei-kes/Scripts/main/TypicalColors2/Other/HooksAndLoops.lua"))() -- loadstring(readfile("HooksAndLoops.lua"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/rei-kes/Scripts/main/TypicalColors2/Other/LibraryTabs.lua"))() -- loadstring(readfile("LibraryTabs.lua"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/rei-kes/Scripts/main/TypicalColors2/Aimbot/ProjectileAimbot.lua"))() -- loadstring(readfile("ProjectileAimbot.lua"))()
@@ -40,7 +42,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/rei-kes/Scripts/main/
 
 -- shared variables
 
-getgenv().getPlayers = function()
+global.getPlayers = function()
     local prunedList = {}
     for _,v in next, players:GetPlayers() do
         if Options.PlayerListMode.Value == "Whitelist" and not Options.PlayerList.Value[v.Name] then
@@ -51,7 +53,7 @@ getgenv().getPlayers = function()
     end
     return prunedList
 end
-getgenv().checkPlayer = function(playerName)
+global.checkPlayer = function(playerName)
     if Options.PlayerListMode.Value == "Whitelist" and not Options.PlayerList.Value[playerName] then
         return true
     elseif Options.PlayerListMode.Value == "Blacklist" and Options.PlayerList.Value[playerName] then
@@ -60,7 +62,7 @@ getgenv().checkPlayer = function(playerName)
     return false
 end
 
-getgenv().getTargets = function(info) -- Teammates, AccountFov, FOV, Raycast, TargetBuildings, TargetInvisibles
+global.getTargets = function(info) -- Teammates, AccountFov, FOV, Raycast, TargetBuildings, TargetInvisibles
     local targets = {}
 
     for _,v in next, getPlayers() do
@@ -93,8 +95,8 @@ getgenv().getTargets = function(info) -- Teammates, AccountFov, FOV, Raycast, Ta
     return targets
 end
 
-getgenv().lookVectorOVERRIDE = nil
-getgenv().cameraOVERRIDE = nil
+global.lookVectorOVERRIDE = nil
+global.cameraOVERRIDE = nil
 
 Library:Notify("Loaded")
 Library:Notify("Press right shift/control to open menu")
