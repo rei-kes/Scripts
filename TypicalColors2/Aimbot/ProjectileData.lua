@@ -7,15 +7,15 @@ end
 
 
 --[[
-    Speed           >> speed of projectile in studs per second
-    Drop            >> how much the projectile's Y velocity will reduce by every second
-    Acceleration    >> amount the speed will increase per second (the only weapon it was for isn't even in the game anymore, so just not even implemented yet)
+    Speed           >> studs per second
+    Drop            >> .Y- per second
+    Acceleration    >> amount the speed will increase
 
-    Client          >> if a projectile is initiated on the client immediately
-    Offset          >> shift of the origin of the projectile relative to the camera
+    Client          >> client initiated projectiles
+    Offset          >> origin of projectile relative to camera
 
-    Hold            >> if a weapon is fired on the mouse button release
-    Alt             >> if a weapon's projectile is used with secondary click
+    Hold            >> click or unclick
+    Alt             >> secondary click
 ]]
 local projectileData = { -- some stuff might be wrong, completely forgot where i got the offsets from
     ["Cold Shoulder"] =         {Speed = 218.75, Drop = 25, Alt = true, Offset = CFrame.new(0, -0.375, 0)},
@@ -63,57 +63,48 @@ local projectileData = { -- some stuff might be wrong, completely forgot where i
     Lemonade =                  {Speed = 63.75, Drop = 25, Offset = CFrame.new(0.75, -0.1875, -1.46875)}
 }
 
- -- variable stats      (note: most if not all are placeholders for future use)
+ -- variable stats
 
 projectileData.Airstrike.Speed = function()
     return player.Character:FindFirstChild("RocketJumped") and 110 or 68.75
 end
-projectileData["Stickybomb Launcher"].Speed = function(bool)
-    if bool and Toggles.AutoShootWaits.Value and (tick() - chargeTick.Value) / 4 < 0.9 then
-        return 0
-    else
-        if Toggles.SpoofWeaponCharge.Value then
+projectileData["Stickybomb Launcher"].Speed = function(manualCall)
+    if manualCall or not Toggles.ProjectileWaitForCharge.Value or (tick() - chargeTick.Value) / 4 > 0.9 then
+        --[[if Toggles.SpoofWeaponCharge.Value then
             return 115.75
-        else
+        else]]
             return lerp(50.3125, 115.75, (tick() - chargeTick.Value) / 4)
-        end
+        --end
     end
 end
-projectileData["Irish Guard"].Speed = function(bool)
-    if bool and Toggles.AutoShootWaits.Value and (tick() - chargeTick.Value) / 4 < 0.9 then
-        return 0
-    else
-        if Toggles.SpoofWeaponCharge.Value then
+projectileData["Irish Guard"].Speed = function(manualCall)
+    if manualCall or not Toggles.ProjectileWaitForCharge.Value or (tick() - chargeTick.Value) / 4 > 0.9 then
+        --[[if Toggles.SpoofWeaponCharge.Value then
             return 115.75
-        else
+        else]]
             return lerp(50.3125, 115.75, (tick() - chargeTick.Value) / 4)
-        end
+        --end
     end
 end
-projectileData["Quickiebomb Launcher"].Speed = function(bool)
-    if bool and Toggles.AutoShootWaits.Value and (tick() - chargeTick.Value) / 1.2 < 0.9 then
-        return 0
-    else
-        if Toggles.SpoofWeaponCharge.Value then
+projectileData["Quickiebomb Launcher"].Speed = function(manualCall)
+    if manualCall or not Toggles.ProjectileWaitForCharge.Value or (tick() - chargeTick.Value) / 1.2 > 0.9 then
+        --[[if Toggles.SpoofWeaponCharge.Value then
             return 115.75
-        else
+        else]]
             return lerp(50.3125, 115.75, (tick() - chargeTick.Value) / 1.2)
-        end
+        --end
     end
 end
-projectileData.Huntsman.Speed = function(bool)
-    if bool and Toggles.AutoShootWaits.Value and tick() - chargeTick.Value < 1 then
-        return 0
-    else
+projectileData.Huntsman.Speed = function(manualCall)
+    if manualCall or not Toggles.ProjectileWaitForCharge.Value or tick() - chargeTick.Value > 1 then
         return lerp(113.25, 162.5, tick() - chargeTick.Value)
     end
 end
-projectileData.Huntsman.Drop = function(bool)
-    if bool and Toggles.AutoShootWaits.Value and tick() - chargeTick.Value < 1 then
-        return 0
-    else
+projectileData.Huntsman.Drop = function(manualCall)
+    if manualCall or not Toggles.ProjectileWaitForCharge.Value or tick() - chargeTick.Value > 1 then
         return lerp(50, 25, tick() - chargeTick.Value)
     end
+    return 0
 end
 
 return projectileData
