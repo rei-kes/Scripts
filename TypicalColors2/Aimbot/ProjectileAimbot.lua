@@ -161,70 +161,72 @@ local projectileRaycast = function(from, to, angle, simulatedTime, projStats)
     return true
 end
 
-local playerStorage = {History = {}, Characters = {}}
-local playerPredictor = function(targets)
-    playerStorage.Characters = {}
+local playerStorage = {}
+local playerPredictor = function(deltaTime)
     for _,v in getPlayers() do
         if v ~= player and v.Character and v.Character:FindFirstChild("Hitbox") and v.Character:FindFirstChild("HumanoidRootPart") then
-            if playerStorage.History[v] then
-                playerStorage.History[v].Previous = {
-                    Position = playerStorage.History[v].Position, 
-                    Velocity = playerStorage.History[v].Velocity, 
+            if playerStorage[v] then
+                playerStorage[v].Previous = {
+                    Position = playerStorage[v].Position, 
+                    Velocity = playerStorage[v].Velocity, 
                 }
 
-                playerStorage.History[v].Position = v.Character.Hitbox.Position
-                playerStorage.History[v].Velocity = v.Character.HumanoidRootPart.AssemblyLinearVelocity
+                playerStorage[v].Position = v.Character.Hitbox.Position
+                playerStorage[v].Velocity = v.Character.HumanoidRootPart.AssemblyLinearVelocity
 
-                if Options.StrafeSamples.Value > 0 and playerStorage.History[v].Velocity.Magnitude > 0.001 then
-                    local direction1 = playerStorage.History[v].Velocity * Vector3.new(1, 0, 1)
-                    local direction2 = playerStorage.History[v].Previous.Velocity * Vector3.new(1, 0, 1)
-                    local rotation = -direction1:Angle(direction2, Vector3.new(0, 1, 0)) * 10 -- correct 0.1 second diffs
-                    rotation = rotation == rotation and math.abs(rotation) < 25 and math.clamp(rotation, -5, 5) or 0 -- goofy
+                if Options.StrafeSamples.Value > 0 and playerStorage[v].Velocity.Magnitude > 0.001 then
+                    local direction1 = playerStorage[v].Velocity * Vector3.new(1, 0, 1)
+                    local direction2 = playerStorage[v].Previous.Velocity * Vector3.new(1, 0, 1)
+                    local rotation = -direction1:Angle(direction2, Vector3.new(0, 1, 0))
+                    rotation = rotation == rotation and math.abs(rotation) < 2.5 and math.clamp(rotation, -0.5, 0.5) or 0 -- goofy
+                    rotation /= deltaTime
 
-                    table.insert(playerStorage.History[v].StrafeSamples, rotation)
-                    while #playerStorage.History[v].StrafeSamples > Options.StrafeSamples.Value do
-                        table.remove(playerStorage.History[v].StrafeSamples, 1)
+                    table.insert(playerStorage[v].StrafeSamples, rotation)
+                    while #playerStorage[v].StrafeSamples > Options.StrafeSamples.Value do
+                        table.remove(playerStorage[v].StrafeSamples, 1)
                     end
 
                     local collectiveRotation = 0
-                    for _,v in playerStorage.History[v].StrafeSamples do
+                    for _,v in playerStorage[v].StrafeSamples do
                         collectiveRotation += v
                     end
-                    playerStorage.History[v].Rotation = collectiveRotation / #playerStorage.History[v].StrafeSamples
+                    playerStorage[v].Rotation = collectiveRotation / #playerStorage[v].StrafeSamples
                 else
-                    playerStorage.History[v].StrafeSamples = {}
-                    playerStorage.History[v].Rotation = 0
+                    playerStorage[v].StrafeSamples = {}
+                    playerStorage[v].Rotation = 0
                 end
             else
-                playerStorage.History[v] = {
+                playerStorage[v] = {
                     Name = v.Name, 
 
                     Position = v.Character.Hitbox.Position, 
                     Prediction = v.Character.Hitbox.Position, -- changing position
-                    Velocity = v.Character.HumanoidRootPart.AssemblyLinearVelocity, -- (v.Character.Hitbox.Position - playerStorage.History[v].Previous.Position) * 10
+                    Velocity = v.Character.HumanoidRootPart.AssemblyLinearVelocity, -- (v.Character.Hitbox.Position - playerStorage[v].Previous.Position) * 10
 
                     StrafeSamples = {}
                 }
             end
         end
     end
-
-    for i,_ in playerStorage.History do
+    for i,_ in playerStorage do
         if not players:FindFirstChild(i.Name) or not i.Character or not i.Character:FindFirstChild("Hitbox") or not i.Character:FindFirstChild("HumanoidRootPart") then
-            playerStorage.History[i] = nil
+            playerStorage[i] = nil
         end
     end
+end
 
+local getCharacters = function(targets)
+    local characters = {}
     for _,v in targets do
         if v:IsA("Player") then
-            playerStorage.History[v].Prediction = {
-                Position = playerStorage.History[v].Position, 
-                Velocity = playerStorage.History[v].Velocity
+            playerStorage[v].Prediction = {
+                Position = playerStorage[v].Position, 
+                Velocity = playerStorage[v].Velocity
             }
 
-            table.insert(playerStorage.Characters, playerStorage.History[v])
+            table.insert(characters, playerStorage[v])
         else
-            table.insert(playerStorage.Characters, {
+            table.insert(characters, {
                 Position = v.Hitbox.Position, 
                 SinglePoint = v.Hitbox.Size.Y < 3, 
 
@@ -235,31 +237,30 @@ local playerPredictor = function(targets)
             })
         end
     end
+    return characters
 end
 
-local getCandidates = function()
+local getCandidates = function(characters, manualCall)
     local candidates = {}
 
     if variables.gun.Value and projectileData[variables.gun.Value.Name] then
+        local rawStats = projectileData[variables.gun.Value.Name]
         local projStats = {
-            Speed = projectileData[variables.gun.Value.Name].Speed, 
-            Drop = projectileData[variables.gun.Value.Name].Drop or 0, 
-            Acceleration = projectileData[variables.gun.Value.Name].Acceleration or {Amount = 0}, 
+            Speed = rawStats.Speed, 
+            Drop = rawStats.Drop or 0, 
+            Acceleration = rawStats.Acceleration or {Amount = 0}, 
 
-            Client = projectileData[variables.gun.Value.Name].Acceleration, 
-            Offset = projectileData[variables.gun.Value.Name].Offset, 
+            Client = rawStats.Acceleration, 
+            Offset = rawStats.Offset, 
 
-            Hold = projectileData[variables.gun.Value.Name].Hold, 
-            Alt = projectileData[variables.gun.Value.Name].Alt
+            Hold = rawStats.Hold, 
+            Alt = rawStats.Alt
         }
-        if typeof(projStats.Speed) == "function" then
-            projStats.Speed = projStats.Speed(true)
-        end
-        if typeof(projStats.Drop) == "function" then
-            projStats.Drop = projStats.Drop()
-        end
+        if typeof(projStats.Speed) == "function" then projStats.Speed = projStats.Speed(manualCall) end
+        if typeof(projStats.Drop) == "function" then projStats.Drop = projStats.Drop() end
+        if not projStats.Speed then continue end
 
-        for _,character in playerStorage.Characters do
+        for _,character in characters do
             local simulatedTime, stopTime, multipoints, positions = 0, Options.MaximumTravelTime.Value / 1000, {}, getPositions()
 
             if character.SinglePoint then
@@ -312,20 +313,20 @@ local getCandidates = function()
     return candidates
 end
 
-Ticks["ProjectileAimbot"] = function(manualCall)
+Ticks["ProjectileAimbot"] = {DelayTime = 0.1, Function = function(_, manualCall)
     lookVectorOVERRIDE, cameraOVERRIDE = nil, nil
 
-    playerPredictor(getTargets({
-        Teammates = false, 
-        AccountFov = not Toggles.TargetLeadingPosition.Value, 
-        FOV = Options.ProjectileFieldOfView.Value, 
-        Raycast = Toggles.ProjectileVisibilityCheck.Value, 
-        TargetBuildings = Toggles.ProjectileTargetBuildings.Value,
-        TargetInvisibles = Toggles.ProjectileTargetInvisibles.Value
-    }))
-
     if Toggles.ProjectileSilentAim.Value and Options.ProjectileSilentAimKey:GetState() and not variables.DISABLED.Value and (Toggles.ProjectileAutoShoot.Value or manualCall) then
-        local candidates = getCandidates()
+        local characters = getCharacters(getTargets({
+            Teammates = false, 
+            AccountFov = not Toggles.TargetLeadingPosition.Value, 
+            FOV = Options.ProjectileFieldOfView.Value, 
+            Raycast = Toggles.ProjectileVisibilityCheck.Value, 
+            TargetBuildings = Toggles.ProjectileTargetBuildings.Value,
+            TargetInvisibles = Toggles.ProjectileTargetInvisibles.Value
+        }))
+
+        local candidates = getCandidates(characters, manualCall)
         if #candidates > 0 then
             if Options.ProjectileTargeting.Value == "Closest to Cursor" then
                 table.sort(candidates, function(a, b)
@@ -362,4 +363,8 @@ Ticks["ProjectileAimbot"] = function(manualCall)
             end
         end
     end
-end
+end}
+
+Ticks["PlayerPredictor"] = {DelayTime = 1/30, Function = function(deltaTime)
+    playerPredictor(deltaTime)
+end}
