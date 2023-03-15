@@ -65,7 +65,7 @@ do
     weaponsRequire.firebullet = function(...)
         pcall(function()
             if not Toggles.ProjectileAutoShoot.Value and projectileData[variables.gun.Value.Name] then
-                Ticks["ProjectileAimbot"](true)
+                Ticks["ProjectileAimbot"].Function(true)
             end
         end)
 
@@ -86,19 +86,18 @@ end
 
 -- loops
 
-global.Frames = {}
-run.Heartbeat:Connect(function()
-    for _,_function in Frames do
-        _function()
-    end
-end)
-
-global.Ticks = {}
-task.spawn(function()
-    while task.wait(0.1) do
-        task.spawn(function() -- to get useful errors
-            for _,_function in Ticks do
-                _function()
+global.Ticks = {} --{Function(DeltaTime, ManualCall), <optional> DelayTime}
+run.Heartbeat:Connect(function(deltaTime)
+    for _,v in Ticks do
+        task.spawn(function()
+            if not v.DelayTime or not v.LastTime or tick() > v.LastTime + v.DelayTime then
+                if v.DelayTime then
+                    deltaTime = v.LastTime and tick() - v.LastTime
+                    v.LastTime = tick()
+                end
+                if deltaTime then
+                    v.Function(deltaTime)
+                end
             end
         end)
     end
@@ -106,6 +105,6 @@ end)
 
     -- specific loops
 
-    Frames["Ping"] = function()
+    Ticks["Ping"] = {Function = function()
         global.ping = _stats.Network.ServerStatsItem["Data Ping"]:GetValue() / 1000
-    end
+    end}
