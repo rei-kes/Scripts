@@ -150,7 +150,7 @@ local projectileRaycast = function(from, to, angle, simulatedTime, projStats)
         end
     end
 
-    if Toggles.ProjectilePredictionLine.Value and not lookVectorOVERRIDE then
+    if Toggles.ProjectilePredictionLine.Value and not overrides.lookVector then
         ESP:UpdateObject({
             Key = "ProjectilePredictionLine",
             Drawing = PolyLineDynamic,
@@ -314,7 +314,7 @@ local getCandidates = function(characters, manualCall)
 end
 
 Ticks["ProjectileAimbot"] = {DelayTime = 0.1, Function = function(_, manualCall)
-    lookVectorOVERRIDE, cameraOVERRIDE = nil, nil
+    overrides.lookVector, overrides.camera = nil, nil
 
     if Toggles.ProjectileSilentAim.Value and Options.ProjectileSilentAimKey:GetState() and not variables.DISABLED.Value and (Toggles.ProjectileAutoShoot.Value or manualCall) then
         local characters = getCharacters(getTargets({
@@ -356,7 +356,7 @@ Ticks["ProjectileAimbot"] = {DelayTime = 0.1, Function = function(_, manualCall)
                     }, target.Points)
                 end
 
-                lookVectorOVERRIDE, cameraOVERRIDE = target.Angle, target.Camera
+                overrides.lookVector, overrides.cameraPos = target.Angle, target.Camera
                 if Toggles.ProjectileAutoShoot.Value then
                     weaponsRequire.firebullet(projectileData[variables.gun.Value.Name].Alt)
                 end
@@ -365,6 +365,6 @@ Ticks["ProjectileAimbot"] = {DelayTime = 0.1, Function = function(_, manualCall)
     end
 end}
 
-Ticks["PlayerPredictor"] = {DelayTime = 1/30, Function = function(deltaTime)
+Ticks["PlayerPredictor"] = {DelayTime = INTERVAL, Function = function(deltaTime)
     playerPredictor(deltaTime)
 end}

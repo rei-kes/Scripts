@@ -6,15 +6,13 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/rei-kes/Scripts/main/
 
 notes:
 
-* syn v3 only, due to esp
+* Intended to be used with Synapse V3 because of it's drawing library
 
-* currently only 1 feature, projectile aimbot
-    * projectile aimbot iffy currently, works best with direct hit
-    * loves to overshoot with arc weapons
-    * offsets seem somewhat wrong?
+* Currently only a projectile aimbot demo
+    * Was going to implement more features, but seeing as Synapse is now dead I don't see a use
+    * Seems to be some issues with raycasting where it will phase through geometry
+    * Lackluster implementation of Demo's weapons
 
-* recoding the rest, slowly, eventually
+* Don't use this on any accounts you care about, there may be new detections I am not aware about
 
-* crackhead code
-
-etc etc
+* Crackhead code, etc. etc.

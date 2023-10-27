@@ -40,11 +40,11 @@ local OldNameCall;OldNameCall = hookmetamethod(game, "__namecall", function(...)
         elseif Self.Name == "CreateProjectile" then
             --Args[11] Toggles.SpoofWeaponCharge.Value and Args[2] == "Stickybomb" and 1
 
-            if cameraOVERRIDE then
-                Args[3] = workSpace.CurrentCamera.CFrame.Position + lookVectorOVERRIDE * 100
-                Args[4] = CFrame.lookAt(cameraOVERRIDE, Args[3])
+            if overrides.cameraPos then
+                Args[3] = workSpace.CurrentCamera.CFrame.Position + overrides.lookVector * 100
+                Args[4] = CFrame.lookAt(overrides.cameraPos, Args[3])
 
-                return OldNameCall(unpack(Args))
+                return OldNameCall(unpack(Args, 1, select("#", ...)))
             end
         end
     end
@@ -52,8 +52,8 @@ local OldNameCall;OldNameCall = hookmetamethod(game, "__namecall", function(...)
 end)
 
 local OldIndex;OldIndex = hookmetamethod(game, "__index", function(Self, Key)
-    if Key == "CoordinateFrame" and typeof(Self) == "Instance" and Self.Name == "Camera" and isRelatedTo("Weapons", "Camera") and lookVectorOVERRIDE then
-        return CFrame.lookAt(Self.CFrame.Position, Self.CFrame.Position + lookVectorOVERRIDE)
+    if Key == "CoordinateFrame" and typeof(Self) == "Instance" and Self.Name == "Camera" and isRelatedTo("Weapons", "Camera") and overrides.lookVector then
+        return CFrame.lookAt(Self.CFrame.Position, Self.CFrame.Position + overrides.lookVector)
     end
     return OldIndex(Self, Key)
 end)
@@ -76,7 +76,7 @@ end
 do
     local _function = getsenv(weaponsScript)["RotCamera"]
     getsenv(weaponsScript)["RotCamera"] = function(...)
-        if not lookVectorOVERRIDE then
+        if not overrides.lookVector then
             _function(...)
         end
     end
